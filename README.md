@@ -26,8 +26,8 @@ Connect your **personal WhatsApp account** directly to LLM agents (**Antigravity
 ## 🚀 Quickstart (1-Click Setup)
 
 ```bash
-git clone https://github.com/lharries/whatsapp-mcp.git
-cd whatsapp-mcp
+git clone https://github.com/chavisnguyen/1craft-wa-mcp.git
+cd 1craft-wa-mcp
 
 # 1. 1-click build and auto-configure all AI clients (AGY, Claude Desktop, Cursor, OpenCode)
 make setup
