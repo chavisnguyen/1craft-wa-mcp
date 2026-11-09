@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/mdp/qrterminal"
+	"github.com/rs/zerolog"
 	"go.mau.fi/whatsmeow"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"go.mau.fi/whatsmeow/store/sqlstore"
@@ -50,12 +51,13 @@ func NewClient(ctx context.Context, storeDir string, msgStore *store.Store, verb
 		return nil, fmt.Errorf("failed to create store dir: %w", err)
 	}
 
-	logLevel := "WARN"
+	zlevel := zerolog.WarnLevel
 	if verbose {
-		logLevel = "INFO"
+		zlevel = zerolog.InfoLevel
 	}
-	logger := waLog.Stdout("WhatsApp", logLevel, true)
-	dbLog := waLog.Stdout("WhatsAppDB", "WARN", true)
+	baseLog := zerolog.New(os.Stderr).With().Timestamp().Logger().Level(zlevel)
+	logger := waLog.Zerolog(baseLog.With().Str("mod", "WhatsApp").Logger())
+	dbLog := waLog.Zerolog(baseLog.With().Str("mod", "WhatsAppDB").Logger())
 
 	sessionDbPath := filepath.Join(storeDir, "whatsapp.db")
 	container, err := sqlstore.New(ctx, "sqlite3", fmt.Sprintf("file:%s?_foreign_keys=on", sessionDbPath), dbLog)

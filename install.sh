@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-# Install WhatsApp MCP Server into AGY, OpenCode, Claude Code, Cursor, and Claude Desktop
+# Install WhatsApp MCP Server into AGY, Claude Desktop, Claude Code (CLI), and Kiro
 # Usage:
 #   ./install.sh sse    (Recommended for multiple agents: connects to http://localhost:3026/mcp)
 #   ./install.sh stdio  (Standalone mode: spawns binary on demand)
@@ -35,7 +35,10 @@ import json, os
 path = os.path.expanduser("~/.gemini/config/mcp_config.json")
 if os.path.exists(path):
     with open(path) as f:
-        data = json.load(f)
+        try:
+            data = json.load(f)
+        except Exception:
+            data = {}
 else:
     os.makedirs(os.path.dirname(path), exist_ok=True)
     data = {}
@@ -85,7 +88,7 @@ if "$MODE" == "sse":
 else:
     data["mcpServers"]["$SERVER_NAME"] = {
         "command": "$BIN_PATH",
-        "args": []
+        "args": ["serve"]
     }
 
 with open(path, "w") as f:
@@ -95,14 +98,50 @@ with open(path, "w") as f:
 print("   ✅ Claude Desktop config updated")
 PYEOF
 
-# --- 3. Cursor: ~/.cursor/mcp.json ---
-CURSOR_CONFIG="$HOME/.cursor/mcp.json"
-echo "📝 Updating Cursor config: $CURSOR_CONFIG"
+# --- 3. Claude Code (CLI): ~/.claude.json ---
+CLAUDE_CLI_CONFIG="$HOME/.claude.json"
+echo "📝 Updating Claude Code (CLI) config: $CLAUDE_CLI_CONFIG"
 
 python3 - << PYEOF
 import json, os
 
-path = os.path.expanduser("~/.cursor/mcp.json")
+path = os.path.expanduser("~/.claude.json")
+if os.path.exists(path):
+    with open(path) as f:
+        try:
+            data = json.load(f)
+        except Exception:
+            data = {}
+else:
+    data = {}
+
+data.setdefault("mcpServers", {})
+if "$MODE" == "sse":
+    data["mcpServers"]["$SERVER_NAME"] = {
+        "type": "http",
+        "url": "$SSE_URL"
+    }
+else:
+    data["mcpServers"]["$SERVER_NAME"] = {
+        "command": "$BIN_PATH",
+        "args": ["serve"]
+    }
+
+with open(path, "w") as f:
+    json.dump(data, f, indent=2)
+    f.write("\n")
+
+print("   ✅ Claude Code (CLI) config updated")
+PYEOF
+
+# --- 4. Kiro: ~/.kiro/settings/mcp.json ---
+KIRO_CONFIG="$HOME/.kiro/settings/mcp.json"
+echo "📝 Updating Kiro config: $KIRO_CONFIG"
+
+python3 - << PYEOF
+import json, os
+
+path = os.path.expanduser("~/.kiro/settings/mcp.json")
 if os.path.exists(path):
     with open(path) as f:
         try:
@@ -116,71 +155,25 @@ else:
 data.setdefault("mcpServers", {})
 if "$MODE" == "sse":
     data["mcpServers"]["$SERVER_NAME"] = {
-        "url": "$SSE_URL"
+        "url": "$SSE_URL",
+        "disabled": False
     }
 else:
     data["mcpServers"]["$SERVER_NAME"] = {
-        "command": "$BIN_PATH"
+        "command": "$BIN_PATH",
+        "args": ["serve"],
+        "disabled": False
     }
 
 with open(path, "w") as f:
     json.dump(data, f, indent=2)
     f.write("\n")
 
-print("   ✅ Cursor config updated")
-PYEOF
-
-# --- 4. OpenCode: ~/.config/opencode/opencode.json(c) ---
-echo "📝 Updating OpenCode config..."
-
-python3 - << PYEOF
-import json, os, re
-
-base = os.path.expanduser("~/.config/opencode")
-candidates = [os.path.join(base, "opencode.jsonc"), os.path.join(base, "opencode.json")]
-path = next((p for p in candidates if os.path.exists(p)), candidates[1])
-
-def strip_jsonc(text):
-    text = re.sub(r"/\*.*?\*/", "", text, flags=re.DOTALL)
-    text = re.sub(r"(^|\s)//[^\n]*", r"\1", text)
-    text = re.sub(r",(\s*[}\]])", r"\1", text)
-    return text
-
-if os.path.exists(path):
-    with open(path) as f:
-        content = f.read()
-    try:
-        data = json.loads(content)
-    except Exception:
-        try:
-            data = json.loads(strip_jsonc(content))
-        except Exception:
-            data = {}
-else:
-    os.makedirs(base, exist_ok=True)
-    data = {}
-
-data.setdefault("mcpServers", {})
-if "$MODE" == "sse":
-    data["mcpServers"]["$SERVER_NAME"] = {
-        "type": "remote",
-        "url": "$SSE_URL"
-    }
-else:
-    data["mcpServers"]["$SERVER_NAME"] = {
-        "type": "local",
-        "command": ["$BIN_PATH"]
-    }
-
-with open(path, "w") as f:
-    json.dump(data, f, indent=2)
-    f.write("\n")
-
-print(f"   ✅ OpenCode config updated ({os.path.basename(path)})")
+print("   ✅ Kiro config updated")
 PYEOF
 
 echo ""
-echo "🎉 Setup complete! All AI clients configured for $SERVER_NAME MCP Server ($MODE mode)."
+echo "🎉 Setup complete! Supported AI clients configured for $SERVER_NAME MCP Server ($MODE mode)."
 if [ "$MODE" = "sse" ]; then
     echo "👉 Run 'make daemon' to start the shared WhatsApp server daemon."
 fi

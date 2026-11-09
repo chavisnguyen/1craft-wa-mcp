@@ -6,7 +6,7 @@
 [![RAM](https://img.shields.io/badge/RAM-~15MB-brightgreen?style=flat-square)](README.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
 
-Lightweight WhatsApp [Model Context Protocol (MCP)](https://modelcontextprotocol.io) server written in pure Go. Connects AI agents (**Antigravity**, **Cursor**, **Claude**, **OpenCode**) directly to personal WhatsApp accounts.
+Lightweight WhatsApp [Model Context Protocol (MCP)](https://modelcontextprotocol.io) server written in pure Go. Connects AI agents (**Antigravity**, **Claude Desktop & CLI**, **Kiro**) directly to personal WhatsApp accounts.
 
 ---
 
@@ -14,7 +14,7 @@ Lightweight WhatsApp [Model Context Protocol (MCP)](https://modelcontextprotocol
 
 - **Pure Go (~15MB RAM):** Single binary, zero Python/node dependencies.
 - **Shared Daemon (`:3026`):** One background process maintains the WhatsApp connection while serving multiple AI clients simultaneously without session drops or SQLite locks.
-- **1-Click Auto Config:** Automatically detects and configures AGY, Claude Desktop, Cursor, Claude Code, and OpenCode.
+- **1-Click Auto Config:** Automatically detects and configures AGY, Claude Desktop, Claude Code (CLI), and Kiro.
 - **Auto Updates (`make update`):** Keeps `whatsmeow` up-to-date with WhatsApp Web protocol changes.
 - **Voice & Media Support:** Handles photos, videos, documents, and PTT voice notes (via FFmpeg).
 
@@ -47,6 +47,8 @@ make doctor  # Verify connection and configuration health
 | `make doctor` | Run full system diagnostic (`🟢/🟡/🔴`) |
 | `make update` | Update `whatsmeow` to latest and rebuild |
 | `make test` | Run unit tests |
+| `make clean` | Clean build artifacts, PID, and log files |
+| `make help` | Show available commands |
 
 ---
 

@@ -13,37 +13,37 @@ PORT ?= 3026
 
 all: build
 
-## setup: 1-click build và tự động cấu hình vào tất cả AI clients (AGY, Claude Desktop, Cursor, OpenCode)
+## setup: 1-click build and auto-configure supported AI clients (AGY, Claude Desktop, Claude Code, Kiro)
 setup: build
 	@./install.sh sse
 	@echo ""
 	@echo "========================================================"
-	@echo "🎉 SETUP HOÀN TẤT!"
+	@echo "🎉 SETUP COMPLETE!"
 	@echo "========================================================"
-	@echo "1. Quét QR đăng nhập: make login"
-	@echo "2. Khởi động daemon nền: make daemon"
-	@echo "3. Kiểm tra chẩn đoán hệ thống: make doctor"
+	@echo "1. Scan QR code to log in: make login"
+	@echo "2. Start background daemon: make daemon"
+	@echo "3. Run system diagnostics: make doctor"
 	@echo "========================================================"
 
-## build: Biên dịch binary thuần Golang
+## build: Compile pure Go binary
 build:
 	@mkdir -p $(BIN_DIR)
 	@go build -o $(BIN_PATH) ./cmd/whatsapp-mcp
 	@echo "✅ Build success: $(BIN_PATH)"
 
-## install-sse: Cấu hình MCP server chế độ HTTP/SSE daemon (Khuyến nghị cho nhiều AI Agent)
+## install-sse: Configure MCP server in HTTP/SSE daemon mode (Recommended for multiple AI agents)
 install-sse: build
 	@./install.sh sse
 
-## install-stdio: Cấu hình MCP server chế độ stdio (Standalone binary)
+## install-stdio: Configure MCP server in stdio mode (Standalone binary)
 install-stdio: build
 	@./install.sh stdio
 
-## install: Cài đặt binary vào $GOPATH/bin
+## install: Install binary to $GOPATH/bin
 install:
 	go install ./cmd/whatsapp-mcp
 
-## daemon: Chạy HTTP/SSE Daemon nền trên port $(PORT) (dành cho nhiều Agent dùng đồng thời)
+## daemon: Start background HTTP/SSE daemon on port $(PORT) (for concurrent agents)
 daemon: build
 	@if [ -f $(PID_FILE) ] && kill -0 $$(cat $(PID_FILE)) 2>/dev/null; then \
 		echo "⚠️ Daemon already running (PID: $$(cat $(PID_FILE))) on port $(PORT)"; \
@@ -61,7 +61,7 @@ daemon: build
 		fi \
 	fi
 
-## stop: Dừng tiến trình daemon nền
+## stop: Stop background daemon process
 stop:
 	@if [ -f $(PID_FILE) ]; then \
 		echo "🛑 Stopping daemon (PID: $$(cat $(PID_FILE)))..."; \
@@ -73,10 +73,10 @@ stop:
 		echo "ℹ️ No PID file found, checked running processes."; \
 	fi
 
-## restart: Khởi động lại daemon
+## restart: Restart daemon
 restart: stop daemon
 
-## status: Kiểm tra trạng thái Daemon và WhatsApp
+## status: Check Daemon and WhatsApp session status
 status: build
 	@echo "--- WhatsApp Daemon Status ---"
 	@if [ -f $(PID_FILE) ] && kill -0 $$(cat $(PID_FILE)) 2>/dev/null; then \
@@ -88,27 +88,34 @@ status: build
 	@echo "--- WhatsApp Session Status ---"
 	@$(BIN_PATH) status
 
-## doctor: Chẩn đoán toàn diện sức khỏe hệ thống
+## doctor: Run full system diagnostics
 doctor: build
 	@$(BIN_PATH) -port $(PORT) doctor
 
-## login: Quét mã QR liên kết tài khoản WhatsApp trên terminal
+## login: Scan QR code in terminal to link WhatsApp account
 login: build
 	@$(BIN_PATH) login
 
-## run: Chạy MCP stdio server trực tiếp trên terminal
+## run: Run MCP stdio server directly in terminal
 run: build
 	@$(BIN_PATH) serve
 
-## update: Tự động cập nhật whatsmeow lên bản mới nhất
+## update: Automatically update whatsmeow to latest version
 update:
 	@./scripts/update-deps.sh
 
-## test: Chạy toàn bộ Unit Tests
+## test: Run all unit tests
 test:
 	@go test -v ./...
 
-## clean: Dọn dẹp thư mục bin và file log/pid
+## clean: Clean bin directory, PID, and log files
 clean:
 	@rm -rf $(BIN_DIR) $(PID_FILE) $(LOG_FILE)
 	@echo "✅ Cleaned."
+
+## help: Show this help message
+help:
+	@echo "Usage: make [target]"
+	@echo ""
+	@echo "Targets:"
+	@grep -E '^## ' $(MAKEFILE_LIST) | sed -e 's/## //' | awk -F': ' '{printf "  %-15s %s\n", $$1, $$2}'

@@ -34,7 +34,16 @@ func main() {
 	sseMode := flag.Bool("sse", false, "Run in HTTP/SSE Server daemon mode (shared for multiple agents)")
 	port := flag.String("port", defaultPort, "Port to bind HTTP/SSE server (e.g. 3026)")
 	host := flag.String("host", defaultHost, "Specific host to bind (default empty: binds dual-stack 127.0.0.1 and [::1])")
-	storeDir := flag.String("store-dir", "store", "Directory to store message database and session credentials")
+	defaultStoreDir := "store"
+	if _, err := os.Stat(defaultStoreDir); os.IsNotExist(err) {
+		if exe, err := os.Executable(); err == nil {
+			cand := filepath.Join(filepath.Dir(exe), "..", "store")
+			if _, err := os.Stat(cand); err == nil {
+				defaultStoreDir = cand
+			}
+		}
+	}
+	storeDir := flag.String("store-dir", defaultStoreDir, "Directory to store message database and session credentials")
 	verbose := flag.Bool("verbose", false, "Enable verbose WhatsApp client logs")
 
 	flag.Usage = func() {
@@ -128,7 +137,7 @@ func runLogin(storeDir string, verbose bool) {
 		os.Exit(1)
 	}
 
-	fmt.Println("✓ Login complete! You can now run the MCP server with Claude Desktop, Cursor, or AGY.")
+	fmt.Println("✓ Login complete! You can now run the MCP server with Claude, AGY, or Kiro.")
 }
 
 func runStatus(storeDir string) {
@@ -355,14 +364,11 @@ func runDoctor(port, storeDir string) {
 	// Claude Desktop
 	checkClientConfig("Claude Desktop", filepath.Join(home, "Library/Application Support/Claude/claude_desktop_config.json"))
 
-	// Cursor
-	checkClientConfig("Cursor", filepath.Join(home, ".cursor/mcp.json"))
+	// Claude Code (CLI)
+	checkClientConfig("Claude Code (CLI)", filepath.Join(home, ".claude.json"))
 
-	// Claude Code
-	checkClientConfig("Claude Code", filepath.Join(home, ".claude/claude_code_config.json"))
-
-	// OpenCode
-	checkClientConfig("OpenCode", filepath.Join(home, ".config/opencode/opencode.json"))
+	// Kiro
+	checkClientConfig("Kiro", filepath.Join(home, ".kiro/settings/mcp.json"))
 
 	fmt.Printf("\n✨ Doctor check complete! Run './install.sh' to configure clients automatically.\n")
 }
